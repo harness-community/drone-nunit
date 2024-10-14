@@ -51,6 +51,9 @@ func Exec(ctx context.Context, args Args) error {
 		}
 	}
 
+	// Flag to track if any test failed
+	var testFailed bool
+
 	// Process the test result files
 	for _, file := range files {
 		failed, err := processTestResults(file)
@@ -61,12 +64,7 @@ func Exec(ctx context.Context, args Args) error {
 
 		if failed {
 			logger.Warnf("Test results indicate failure in file: %s", file)
-		}
-
-		if failed && args.PluginFailedTestsFailBuild {
-			errMsg := "tests failed, failing the build as you set PLUGIN_FAILED_TESTS_FAIL_BUILD is true"
-			logger.Error(errMsg)
-			return errors.New(errMsg)
+			testFailed = true
 		}
 
 		conversionErr := applyXSLTTransformation(file, logger)
@@ -76,6 +74,13 @@ func Exec(ctx context.Context, args Args) error {
 			logger.Error(conversionErr)
 			return errors.New(errMsg)
 		}
+	}
+
+	// After processing and transforming all files, check if any test failed
+	if testFailed && args.PluginFailedTestsFailBuild {
+		errMsg := "tests failed, failing the build as PLUGIN_FAILED_TESTS_FAIL_BUILD is set to true"
+		logger.Error(errMsg)
+		return errors.New(errMsg)
 	}
 
 	logger.Info("Plugin execution completed successfully")
