@@ -1,4 +1,4 @@
-FROM debian:bookworm
+FROM debian:stable-20240926-slim
 ENV GODEBUG=netdns=go
 
 # Install required dependencies

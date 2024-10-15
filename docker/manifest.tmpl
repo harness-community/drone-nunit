@@ -1,13 +1,7 @@
-image: plugins/nunit:{{#if build.tag}}{{trimPrefix "v" build.tag}}{{else}}latest{{/if}}
-{{#if build.tags}}
-tags:
-{{#each build.tags}}
-  - {{this}}
-{{/each}}
-{{/if}}
+image: plugins/nunit:latest
+
 manifests:
-  -
-    image: plugins/nunit:{{#if build.tag}}{{trimPrefix "v" build.tag}}-{{/if}}linux-amd64
+  - image: plugins/nunit:linux-amd64
     platform:
       architecture: amd64
       os: linux
