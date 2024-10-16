@@ -59,7 +59,7 @@ func Exec(ctx context.Context, args Args) error {
 		failed, err := processTestResults(file)
 		if err != nil {
 			logger.WithError(err).Errorf("Error processing test result file %s", file)
-			return err
+			continue
 		}
 
 		if failed {
