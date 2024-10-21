@@ -33,8 +33,8 @@ func Exec(ctx context.Context, args Args) error {
 	// Find the test report files based on the PLUGIN_TEST_REPORT_PATH
 	files, err := findTestFiles(args.PluginTestReportPath)
 	if err != nil {
-		logger.WithError(err).Error("Error finding test files")
-		return errors.New("Error finding test files")
+		logger.WithError(err).Error("Failed to find test files")
+		return errors.New("failed to find test files")
 	}
 
 	// Log the number of test files found
@@ -43,9 +43,9 @@ func Exec(ctx context.Context, args Args) error {
 	// If no files are found and PLUGIN_FAIL_IF_NO_RESULTS is true, return an error
 	if len(files) == 0 {
 		if args.PluginFailIfNoResults {
-			errMsg := "no test results found, failing the build as you set PLUGIN_FAIL_IF_NO_RESULTS is true"
+			errMsg := "no test results found, failing the build as PLUGIN_FAIL_IF_NO_RESULTS is set to true"
 			logger.Error(errMsg)
-			return errors.New(errMsg) // Return an error only if the flag is true
+			return errors.New(errMsg)
 		} else {
 			logger.Warn("No test results found, but failing the build is not configured.")
 		}
@@ -58,7 +58,7 @@ func Exec(ctx context.Context, args Args) error {
 	for _, file := range files {
 		failed, err := processTestResults(file)
 		if err != nil {
-			logger.WithError(err).Errorf("Error processing test result file %s", file)
+			logger.WithError(err).Errorf("Failed to process test result file %s", file)
 			continue
 		}
 
@@ -70,7 +70,7 @@ func Exec(ctx context.Context, args Args) error {
 		conversionErr := applyXSLTTransformation(file, logger)
 
 		if conversionErr != nil {
-			errMsg := "Build Failed, failing the transformation from Nunit to Junit"
+			errMsg := "Build failed, XSLT transformation from NUnit to JUnit failed"
 			logger.Error(conversionErr)
 			return errors.New(errMsg)
 		}
@@ -130,39 +130,40 @@ func applyXSLTTransformation(filePath string, logger *logrus.Entry) error {
 	// Load the NUnit XML input
 	input, err := os.ReadFile(filePath)
 	if err != nil {
-		logger.Error("Error reading NUnit XML file %s: %v", filePath, err)
-		return errors.New("Error reading NUnit XML file")
+		logger.Errorf("Failed to read NUnit XML file %s: %v", filePath, err)
+		return errors.New("failed to read NUnit XML file")
 	}
 	// Load the XSLT content
 	xsltContent, err := os.ReadFile(xslFilePath)
 	if err != nil {
-		logger.Error("Error reading XSLT file %s: %v", xslFilePath, err)
-		return errors.New("Error reading XSLT file")
+		logger.Errorf("Failed to read XSLT file %s: %v", xslFilePath, err)
+		return errors.New("failed to read XSLT file")
 	}
 
 	// Create a new stylesheet
 	xs, err := xslt.NewStylesheet(xsltContent)
 	if err != nil {
-		logger.Error("Error creating stylesheet: %v", err)
-		return errors.New("Error creating stylesheet")
+		logger.Errorf("Failed to create stylesheet: %v", err)
+		return errors.New("failed to create stylesheet")
 	}
 
 	// Apply the XSLT transformation
 	transformed, err := xs.Transform(input)
 	if err != nil {
-		logger.Error("Error applying XSLT transformation to file %s: %v", filePath, err)
-		return errors.New("Error applying XSLT transformation to file")
+		logger.Errorf("Failed to apply XSLT transformation to file %s: %v", filePath, err)
+		return errors.New("failed to apply XSLT transformation to file")
 	}
 	defer xs.Close()
+
 	// Write the transformed content back to the same file
 	junitFilePath := filePath
 	err = os.WriteFile(junitFilePath, transformed, 0644)
 	if err != nil {
-		logger.Error("Error writing transformed JUnit XML to file %s: %v", junitFilePath, err)
-		return errors.New("Error writing transformed JUnit XML to file")
+		logger.Errorf("Failed to write transformed JUnit XML to file %s: %v", junitFilePath, err)
+		return errors.New("failed to write transformed JUnit XML to file")
 	}
 
-	logger.Debug("Successfully wrote transformed file to: %s", filePath)
+	logger.Debugf("Successfully wrote transformed file to: %s", filePath)
 
 	return nil
 }
